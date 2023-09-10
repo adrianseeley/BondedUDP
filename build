@@ -1,0 +1,57 @@
+#!/bin/bash
+
+if [[ "$1" == "measure" ]]; then
+    CC=gcc
+    CFLAGS="-Wall -Wextra -Werror -O3 -I./include -DMEASURE"
+    LFLAGS="-lturbopayload -lglfw -lavformat -lavcodec -lavutil -lm -O3"
+elif [[ "$1" == "debug" ]]; then
+    CC=gcc
+    CFLAGS="-Wall -Wextra -Werror -g -I./include"
+    LFLAGS="-lturbopayload -lglfw -lavformat -lavcodec -lavutil -lm -g"
+else
+    CC=gcc
+    CFLAGS="-Wall -Wextra -Werror -O3 -I./include"
+    LFLAGS="-lturbopayload -lglfw -lavformat -lavcodec -lavutil -lm -O3"
+fi
+
+
+rm -rf ./obj
+mkdir -p ./obj
+rm -rf ./bin
+mkdir -p ./bin
+
+compile(){
+    echo $CC $CFLAGS -c $1 -o $2
+    $CC $CFLAGS -c $1 -o $2
+    if [ $? -ne 0 ]; then
+        echo "Compilation failed for $cFilename!"
+        exit 1
+    fi
+}
+
+link() {
+    filenames=("${@:1:$#-1}")
+    output_file="${!#}"
+    echo $CC "${filenames[@]}" $LFLAGS -o "$output_file"
+    $CC "${filenames[@]}" $LFLAGS -o "$output_file"
+    if [ $? -ne 0 ]; then
+        echo "Linking failed!"
+        exit 1
+    fi
+}
+
+compile "./src/GLAD.c" "./obj/GLAD.o"
+compile "./src/BondedCapture.c" "./obj/BondedCapture.o"
+compile "./src/BondedDecoder.c" "./obj/BondedDecoder.o"
+compile "./src/BondedPipe.c" "./obj/BondedPipe.o"
+compile "./src/BondedRecorder.c" "./obj/BondedRecorder.o"
+compile "./src/BondedRenderer.c" "./obj/BondedRenderer.o"
+compile "./src/BondedUDPReceiver.c" "./obj/BondedUDPReceiver.o"
+compile "./src/BondedUDPSender.c" "./obj/BondedUDPSender.o"
+compile "./src/BondedUDPShared.c" "./obj/BondedUDPShared.o"
+compile "./src/FastMJPG.c" "./obj/FastMJPG.o"
+
+link "./obj/GLAD.o" "./obj/BondedCapture.o" "./obj/BondedDecoder.o" "./obj/BondedPipe.o" "./obj/BondedRecorder.o" "./obj/BondedRenderer.o" "./obj/BondedUDPReceiver.o" "./obj/BondedUDPSender.o" "./obj/BondedUDPShared.o" "./obj/FastMJPG.o" "./bin/FastMJPG"
+
+echo "Build successful!"
+exit 0
